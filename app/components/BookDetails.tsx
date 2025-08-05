@@ -9,6 +9,7 @@ import { bodoni } from '../fonts';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 interface BookDetailsProps {
   book: Book;
@@ -68,6 +69,12 @@ export default function BookDetails({ book, reviews }: BookDetailsProps) {
 
   const relatedBooks = getRelatedBooks();
 
+  const { elementRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: '50px',
+    triggerOnce: true
+  });
+
   const handleAIOverview = async () => {
     setShowAIDialog(true);
     setIsLoading(true);
@@ -91,107 +98,75 @@ Overall, this book seems to be well-received by the reading community and would 
 
   const handleSubmitReview = () => {
     if (!reviewForm.reviewText.trim()) {
-      toast.error('Please fill in your review');
+      toast.error('Please write a review before submitting.');
       return;
     }
 
-    const ratingNum = parseFloat(reviewForm.rating);
-    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-      toast.error('Please enter a valid rating between 1 and 5');
+    const rating = parseFloat(reviewForm.rating);
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      toast.error('Please enter a valid rating between 1 and 5.');
       return;
     }
 
-    // Create new review with guest username
     const newReview: Review = {
-      id: `guest-${Date.now()}`, // Generate unique ID
+      id: `local-${Date.now()}`,
       bookTitle: book.title,
       author: book.author,
       reviewText: reviewForm.reviewText,
-      rating: ratingNum,
-      reviewedBy: 'guest',
+      rating: rating,
+      reviewedBy: 'You',
       createdAt: new Date().toISOString()
     };
 
-    // Add to local reviews
-    setLocalReviews(prev => [...prev, newReview]);
-    
-    // Close dialog and reset form
-    setShowReviewDialog(false);
+    setLocalReviews(prev => [newReview, ...prev]);
     setReviewForm({ rating: '5', reviewText: '' });
+    setShowReviewDialog(false);
     toast.success('Review submitted successfully!');
   };
 
   const handleCancelReview = () => {
-    setShowReviewDialog(false);
     setReviewForm({ rating: '5', reviewText: '' });
+    setShowReviewDialog(false);
   };
 
   const handleAISummary = async () => {
-    if (allReviews.length === 0) {
-      toast.error('No reviews available to summarize');
-      return;
-    }
-
     setShowAISummaryDialog(true);
     setIsLoading(true);
-
+    
     // Simulate AI processing
     setTimeout(() => {
-      const totalReviews = allReviews.length;
-      const avgRating = averageRating.toFixed(1);
-      
-      // Analyze review sentiments and themes
-      const positiveReviews = allReviews.filter(review => review.rating >= 4).length;
-      const neutralReviews = allReviews.filter(review => review.rating >= 3 && review.rating < 4).length;
-      const negativeReviews = allReviews.filter(review => review.rating < 3).length;
+      const themes = extractThemes(allReviews.map(r => r.reviewText));
+      setAiSummary(`AI Analysis of Reviews for "${book.title}" by ${book.author}
 
-      // Extract common themes from review text
-      const reviewTexts = allReviews.map(review => review.reviewText.toLowerCase());
-      const themes = extractThemes(reviewTexts);
+SUMMARY:
+Based on ${allReviews.length} reviews, this book has an average rating of ${averageRating.toFixed(1)}/5 stars.
 
-      const summary = `AI Review Summary for "${book.title}" by ${book.author}
+KEY THEMES IDENTIFIED:
+${themes.map((theme, index) => `${index + 1}. ${theme}`).join('\n')}
 
-📊 Overall Statistics:
-• Total Reviews: ${totalReviews}
-• Average Rating: ${avgRating}/5 stars
-• Positive Reviews (4-5 stars): ${positiveReviews} (${Math.round((positiveReviews/totalReviews)*100)}%)
-• Neutral Reviews (3-4 stars): ${neutralReviews} (${Math.round((neutralReviews/totalReviews)*100)}%)
-• Critical Reviews (1-3 stars): ${negativeReviews} (${Math.round((negativeReviews/totalReviews)*100)}%)
+REVIEW ANALYSIS:
+The reviews indicate that readers particularly appreciate the ${book.genres?.[0] || 'content'} and find the book to be ${averageRating >= 4 ? 'highly engaging' : 'worthwhile'}. 
 
-🎯 Key Themes Identified:
-${themes.map(theme => `• ${theme}`).join('\n')}
-
-💭 Sentiment Analysis:
-${positiveReviews > negativeReviews ? 
-  `This book has received predominantly positive feedback, with readers praising its ${themes.slice(0, 2).join(' and ')}.` :
-  `Reviews are mixed, with some readers expressing concerns while others appreciate the ${themes[0] || 'content'}.`
-}
-
-📝 Recommendation:
-${parseFloat(avgRating) >= 4 ? 
-  `Highly recommended based on strong positive feedback and high average rating.` :
-  parseFloat(avgRating) >= 3 ? 
-  `Moderately recommended with some reservations noted in reviews.` :
-  `Approach with caution based on mixed to negative feedback.`
-}`;
-
-      setAiSummary(summary);
+RECOMMENDATION:
+This book appears to be ${averageRating >= 4 ? 'highly recommended' : 'moderately recommended'} by the reading community, especially for fans of ${book.genres?.[0] || 'this genre'}.`);
       setIsLoading(false);
-    }, 2500);
+    }, 3000);
   };
 
   const extractThemes = (reviewTexts: string[]): string[] => {
     const commonWords = [
-      'character', 'plot', 'story', 'writing', 'style', 'engaging', 'interesting',
-      'boring', 'slow', 'fast', 'emotional', 'thought-provoking', 'entertaining',
-      'well-written', 'beautiful', 'amazing', 'disappointing', 'recommend', 'love'
+      'character', 'plot', 'story', 'writing', 'author', 'book', 'read', 'reading',
+      'love', 'like', 'enjoy', 'great', 'good', 'amazing', 'wonderful', 'beautiful',
+      'interesting', 'engaging', 'compelling', 'thought-provoking', 'emotional',
+      'romance', 'fantasy', 'fiction', 'classic', 'modern', 'contemporary'
     ];
 
-    const themeCounts: { [key: string]: number } = {};
-    
+    const themeCounts: Record<string, number> = {};
+
     reviewTexts.forEach(text => {
+      const lowerText = text.toLowerCase();
       commonWords.forEach(word => {
-        if (text.includes(word)) {
+        if (lowerText.includes(word)) {
           themeCounts[word] = (themeCounts[word] || 0) + 1;
         }
       });
@@ -205,7 +180,7 @@ ${parseFloat(avgRating) >= 4 ?
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-brown/5 to-brand-green/5">
+    <div className="min-h-screen bg-gradient-to-br from-brand-brown/5 to-brand-green/5" ref={elementRef as React.RefObject<HTMLDivElement>}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="mb-8">
@@ -260,7 +235,7 @@ ${parseFloat(avgRating) >= 4 ?
                 </p>
               </div>
 
-                            {/* Rating Section */}
+              {/* Rating Section */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                 <StarRating rating={averageRating} className="text-xl sm:text-2xl" />
                 <span className="text-base sm:text-lg text-brand-brown/70">
@@ -324,7 +299,7 @@ ${parseFloat(avgRating) >= 4 ?
           </div>
         </div>
 
-                {/* Reviews Section */}
+        {/* Reviews Section */}
         <div className="bg-white rounded-xl p-4 lg:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <h2 className={`text-2xl sm:text-3xl font-bold text-brand-brown ${bodoni.className}`}>
@@ -378,18 +353,25 @@ ${parseFloat(avgRating) >= 4 ?
           )}
         </div>
 
-        {/* Related Books Section */}
-        <div className="bg-white rounded-xl p-4 lg:p-8 mt-8">
-          <h2 className={`text-2xl sm:text-3xl font-bold text-brand-brown mb-6 ${bodoni.className}`}>
+        {/* Related Books Section with Animation */}
+        <div className="bg-white rounded-xl p-4 lg:p-8 mt-8" ref={elementRef as React.RefObject<HTMLDivElement>}>
+          <h2 className={`text-2xl sm:text-3xl font-bold text-brand-brown mb-6 ${bodoni.className} transition-all duration-700 ${
+            isIntersecting ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
             You Might Also Like
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 gap-y-12">
             {relatedBooks.length > 0 ? (
-              relatedBooks.map((relatedBook) => (
+              relatedBooks.map((relatedBook, index) => (
                 <Link 
                   href={`/book/${relatedBook.id}`} 
                   key={relatedBook.id} 
-                  className="group cursor-pointer"
+                  className="group cursor-pointer transition-all duration-700 ease-out"
+                  style={{
+                    opacity: isIntersecting ? 1 : 0,
+                    transform: isIntersecting ? 'translateY(0)' : 'translateY(20px)',
+                    transitionDelay: `${index * 100}ms`
+                  }}
                 >
                   <div className="w-[200px] aspect-[2/3] rounded-lg shadow-md transition transform hover:scale-105 bg-gradient-to-br from-brand-brown/5 to-brand-green/5 border border-brand-brown/10 flex items-center justify-center">
                     <span className="text-brand-brown/40 text-sm">Cover</span>
@@ -404,7 +386,12 @@ ${parseFloat(avgRating) >= 4 ?
                 </Link>
               ))
             ) : (
-              <div className="col-span-full text-center py-8">
+              <div className="col-span-full text-center py-8 transition-all duration-700 ease-out"
+                style={{
+                  opacity: isIntersecting ? 1 : 0,
+                  transform: isIntersecting ? 'translateY(0)' : 'translateY(20px)',
+                  transitionDelay: '200ms'
+                }}>
                 <div className="text-4xl mb-4">📚</div>
                 <h3 className="text-lg font-semibold text-brand-brown mb-2">No Related Books Found</h3>
                 <p className="text-brand-brown/70">
@@ -599,4 +586,4 @@ ${parseFloat(avgRating) >= 4 ?
       )}
     </div>
   );
-} 
+}

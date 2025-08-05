@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Book } from '../data/sampleData';
 import StarRating from './StarRating';
 import { bodoni } from '../fonts';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 interface BookRowProps {
   title: string;
@@ -18,6 +19,12 @@ export default function BookRow({ title, books }: BookRowProps) {
 
   const sectionId = `category-${title.toLowerCase().replace(/\s+/g, '-')}`;
   
+  const { elementRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: '50px',
+    triggerOnce: true
+  });
+  
   const handleToggle = () => {
     setShowAll(!showAll);
     // If we're showing less, scroll to the category title
@@ -30,14 +37,23 @@ export default function BookRow({ title, books }: BookRowProps) {
   };
 
   return (
-    <div className="my-12" id={sectionId}>
-      <h2 className={`text-2xl font-bold mb-6 text-brand-brown ${bodoni.className}`}>{title}</h2>
+    <div className="my-12" id={sectionId} ref={elementRef as React.RefObject<HTMLDivElement>}>
+      <h2 className={`text-2xl font-bold mb-6 text-brand-brown ${bodoni.className} transition-all duration-700 ${
+        isIntersecting ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
+        {title}
+      </h2>
       <div className={`flex flex-wrap justify-center sm:justify-start ${showAll ? 'transition-all duration-300' : ''}`}>
-        {displayedBooks.map((book) => (
+        {displayedBooks.map((book, index) => (
           <Link 
             href={`/book/${book.id}`} 
             key={book.id} 
-            className="group w-full sm:w-1/2 lg:w-1/4 pr-8 mb-12"
+            className="group w-full sm:w-1/2 lg:w-1/4 pr-8 mb-12 transition-all duration-700 ease-out"
+            style={{
+              opacity: isIntersecting ? 1 : 0,
+              transform: isIntersecting ? 'translateY(0)' : 'translateY(20px)',
+              transitionDelay: `${index * 100}ms`
+            }}
           >
             <div className="w-[200px] aspect-[2/3] rounded-lg shadow-md transition transform hover:scale-105 bg-gradient-to-br from-brand-brown/5 to-brand-green/5 border border-brand-brown/10 flex items-center justify-center">
               <span className="text-brand-brown/40 text-sm">Cover</span>
@@ -52,26 +68,21 @@ export default function BookRow({ title, books }: BookRowProps) {
           </Link>
         ))}
       </div>
+      
       {hasMoreBooks && (
-        <button
-          onClick={handleToggle}
-          className="mt-6 text-brand-green hover:text-brand-green-dark font-medium text-sm flex items-center gap-1 transition-colors"
-        >
-          {showAll ? 'Show Less' : 'See All'}
-          <svg
-            className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="text-center mt-8 transition-all duration-700 ease-out"
+          style={{
+            opacity: isIntersecting ? 1 : 0,
+            transform: isIntersecting ? 'translateY(0)' : 'translateY(20px)',
+            transitionDelay: `${displayedBooks.length * 100 + 200}ms`
+          }}>
+          <button
+            onClick={handleToggle}
+            className="px-6 py-2 border-2 border-brand-brown text-brand-brown rounded-lg hover:bg-brand-brown hover:text-white transition-colors font-medium"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </button>
+            {showAll ? 'Show Less' : `Show All ${books.length} Books`}
+          </button>
+        </div>
       )}
     </div>
   );
