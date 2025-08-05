@@ -1,0 +1,19 @@
+id,title,author,book_image,genres
+18,Pride And Prejudice,Jane Austen,1315a8cd-81b5-457d-bb93-9e8e3fc6be4a.jpeg,"Romance, Classic Literature, Novel of Manners"
+17,Americanah,Chimamanda Ngozi Adichie,28960a56-c4e2-4e1b-a7d3-a5c6d852ab56.jpeg,"Contemporary Fiction, Literary Fiction"
+19,To Kill a Mockingbird,Harper Lee,8901f4c4-5342-4511-b2ab-e00804118a9f.jpeg,"Southern Gothic, Bildungsroman, Historical Fiction, Legal Drama, Classic"
+9,Purple Hibiscus,Chimamanda Ngozi Adichie,680a17de-8bd6-4b80-801e-6c1ab583163e.jpeg,Fiction
+20,"The Holy Bible, Revised Standard Version",Various,c5ab7d9a-4b4d-423b-9809-b646ab8d8805.jpeg,"Religious Text, Christianity, Bible"
+2,Things Fall Apart,Chinua Achebe,,"Historical Fiction, Cultural Fiction, Tragedy"
+3,Seige and Storm,Leigh Bardugo,,"Fantasy, Young Adult, Adventure"
+4,Department-Q,Jussi Adler-Olsen,,"Crime Thriller, Nordic Noir, Mystery"
+5,Atomic Habits,James Clear,3e1033cc-c775-48e7-b747-30b5a42cc41c.jpeg,"Self-Help, Personal Development, Psychology"
+6,The Alchemist,Paulo Coehlo,c212a3c7-c042-4b6b-91a9-05ca828694fc.jpeg,"Philosophical Fiction, Fantasy, Inspirational"
+7,Nearly All The Men In Lagos Are Mad,Damilare Kuku,9aa75996-7234-450f-a305-7408dc53cd19.jpeg,"Contemporary Fiction, Short Stories, African Literature"
+1,Half of a Yellow Sun,Chimamanda Ngozi Adichie,c650df94-836c-4324-bb7e-52258bf031b8.jpeg,"Historical Fiction, War Fiction, Political Fiction"
+8,Rogue Lawyer,John Grisham,41e83320-eb8e-4059-88d4-0b1d32d1b9e0.jpeg,"Legal Thriller, Crime Fiction, Suspense"
+10,The Power of Now,Eckhar Tolle,1e757994-9ac3-4874-92c9-ae6d64d50ec8.jpeg,"Spirituality, Self-Help, Mindfulness"
+13,In Pursuit of Vision: Exploring the Virtues of Divine Guidance,David O. Oyedepo,f8074663-bd5a-4b30-b3da-5af0426923df.jpeg,"Christian Inspirational, Religious, Spiritual Growth"
+14,Ruin and Rising,Leigh Bardugo,,"Fantasy, Young Adult, Romance"
+15,The Queen's Gambit,Walter Tevis,1c686743-98ce-44b6-a98b-fbda673de2ed.jpeg,"Psychological Fiction, Coming-of-Age, Sports Fiction"
+16,Sunrise on the Reaping,Suzanne Collins,149da950-f106-4b8a-859b-1ac6f9723029.jpeg,Science Fiction
