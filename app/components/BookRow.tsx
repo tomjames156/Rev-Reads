@@ -78,7 +78,7 @@ export default function BookRow({ title, books }: BookRowProps) {
           }}>
           <button
             onClick={handleToggle}
-            className="px-6 py-2 border-2 border-brand-brown text-brand-brown rounded-lg hover:bg-brand-brown hover:text-white transition-colors font-medium"
+            className="px-6 py-2 border-2 border-brand-brown text-brand-brown rounded-lg hover:text-green-800 transition-colors font-medium"
           >
             {showAll ? 'Show Less' : `Show All ${books.length} Books`}
           </button>
